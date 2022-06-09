@@ -31,6 +31,7 @@ def del_na(df,colname_1,rate):
     ##rate:缺失值比例，大于rate变量删除
     na_cols = df[colname_1].isna().sum().sort_values(ascending=False)/float(df.shape[0])
     na_del = na_cols[na_cols >= rate]
+    print ('\n'.join(["变量缺失值多,该变量被删除 {} ".format(i) for i in na_del.index]))
     df = df.drop(na_del.index, axis=1)
     return df,na_del
 ##目标变量映射字典
@@ -58,10 +59,10 @@ def constant_del(df, cols):
         if pd.isnull(uniq_vals).any():
             if len( uniq_vals ) == 2:
                 dele_list.append(col)
-                print (" {} 变量只有一种取值,该变量被删除".format(col))
+                print ("变量只有一种取值,该变量被删除 {} ".format(col))
         elif len(df[col].unique()) == 1:
             dele_list.append(col)  
-            print (" {} 变量只有一种取值,该变量被删除".format(col))
+            print ("变量只有一种取值,该变量被删除 {} ".format(col))
     df = df.drop(dele_list, axis=1)
     return df,dele_list
 ##删除长尾数据
@@ -72,7 +73,7 @@ def tail_del(df,cols,rate):
         if len(df[col].unique()) < 5:
             if df[col].value_counts().max()/len_1 >= rate:
                 dele_list.append(col)  
-                print (" {} 变量分布不均衡,该变量被删除".format(col))
+                print ("变量分布不均衡,该变量被删除 {} ".format(col))
     df = df.drop(dele_list, axis=1)
     return df,dele_list
 ##时间格式转化      
@@ -172,9 +173,9 @@ def cal_score(df_1,dict_bin_score,dict_cont_bin,dict_disc_bin,base_points):
 if __name__ == '__main__':
     path = '.'
     data_path = os.path.join(path ,'data')
-    file_name = 'LoanStats_2019Q1.csv'
     #########读取数据####################################################
-    df_1 = pd.read_csv( os.path.join(data_path, file_name),header=1 ,sep=',', low_memory=False)
+    #df_1 = pd.read_csv( os.path.join(data_path, 'LoanStats_2019Q1.csv'),header=1 ,sep=',', low_memory=False)
+    df_1 = pd.read_csv( os.path.join(data_path, 'test100k.csv'),header=0 ,sep=',', low_memory=False)
 #    df_1.columns
 
     ########好坏样本定义##################################################
@@ -249,25 +250,26 @@ if __name__ == '__main__':
     df_1.head(5)
     np.unique(df_1.dtypes)
     
-    ##revol_util数据格式规约
-    df_1['revol_util']=df_1['revol_util'].str.replace('%','').astype('float')
+    ##revol_util数据格式规约  ----  对 LoanStats_2019Q1.csv 要取消注释
+    #df_1['revol_util']=df_1['revol_util'].str.replace('%','').astype('float')
     
     ##8.日期变量处理
     ##'sec_app_earliest_cr_line'
-    var_date = ['issue_d','earliest_cr_line','sec_app_earliest_cr_line' ]
+    #var_date = ['issue_d','earliest_cr_line','sec_app_earliest_cr_line' ]
+    var_date = ['issue_d','earliest_cr_line' ]  ##  使用 test100k.csv 时，需要去掉   sec_app_earliest_cr_line 相关数据
     ##时间格式转化
     df_1['issue_d'] = df_1['issue_d'].apply(trans_format,args=('%b-%Y','%Y-%m',))
     df_1['earliest_cr_line'] = df_1['earliest_cr_line'].apply(trans_format,args=('%b-%Y','%Y-%m',))
-    df_1['sec_app_earliest_cr_line'] = df_1['sec_app_earliest_cr_line'].apply(trans_format,args=('%b-%Y','%Y-%m',))
+    #df_1['sec_app_earliest_cr_line'] = df_1['sec_app_earliest_cr_line'].apply(trans_format,args=('%b-%Y','%Y-%m',))
     
     #################特征工程#####################################
     ####尝试做一点特征工程
     ##将时间差值转为月份
     df_1['mth_interval']=df_1['issue_d']-df_1['earliest_cr_line']
-    df_1['sec_mth_interval']=df_1['issue_d']-df_1['sec_app_earliest_cr_line']
+    #df_1['sec_mth_interval']=df_1['issue_d']-df_1['sec_app_earliest_cr_line']
     
     df_1['mth_interval'] = df_1['mth_interval'].apply(lambda x: round(x.days/30,0))
-    df_1['sec_mth_interval'] = df_1['sec_mth_interval'].apply(lambda x: round(x.days/30,0))
+    #df_1['sec_mth_interval'] = df_1['sec_mth_interval'].apply(lambda x: round(x.days/30,0))
     df_1['issue_m']=df_1['issue_d'].apply(lambda x: x.month)
     ##删除原始日期变量
     df_1 = df_1.drop(var_date, axis=1)
@@ -322,13 +324,16 @@ if __name__ == '__main__':
     ###连续变量分箱
     dict_cont_bin = {}
     for i in numerical_var:
-        print(i)
+        print('numerical_var:', i)
         dict_cont_bin[i],gain_value_save , gain_rate_save = varbin_meth.cont_var_bin(data_train[i], data_train.target, method=2, mmin=4, mmax=12,
                                      bin_rate=0.01, stop_limit=0.05, bin_min_num=20)
     ###离散变量分箱
     dict_disc_bin = {}
     del_key = []
     for i in categorical_var:
+        if i in ['id', 'url']: # 过滤掉这些
+            continue
+        print('categorical_var:', i)
         dict_disc_bin[i],gain_value_save , gain_rate_save ,del_key_1 = varbin_meth.disc_var_bin(data_train[i], data_train.target, method=2, mmin=4,
                                      mmax=10, stop_limit=0.05, bin_min_num=20)
         if len(del_key_1)>0 :
@@ -442,7 +447,7 @@ if __name__ == '__main__':
     df_temp_other = df_temp_normal.loc[index_2]
     df_temp = pd.concat([df_temp,df_train_woe[df_train_woe.target==1]],axis=0,ignore_index=True)
     ##用随机抽取的样本做样本生成
-    sm_sample_1 = BorderlineSMOTE(random_state=10,sampling_strategy=0.5,k_neighbors=5)
+    sm_sample_1 = BorderlineSMOTE(random_state=10,sampling_strategy=1.0,k_neighbors=5)
     x_train, y_train = sm_sample_1.fit_resample(df_temp[var_woe_name], df_temp.target)
     x_train.shape
     sum(y_train)
