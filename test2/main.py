@@ -299,7 +299,7 @@ if __name__ == '__main__':
     ##余额大于零的循环账户数与所有循环账户数的比
     df_1['good_rev_accts_rate'] = df_1.num_rev_tl_bal_gt_0/df_1.num_rev_accts
 
-  #################变量分箱####################################
+    #################变量分箱####################################
     ##离散变量与连续变量区分
     categorical_var,numerical_var = category_continue_separation(df_1,list(df_1.columns))
     for s in set(numerical_var):
@@ -350,7 +350,7 @@ if __name__ == '__main__':
     for i in dict_cont_bin.keys():
         df_cont_bin_train = pd.concat([ df_cont_bin_train , varbin_meth.cont_var_bin_map(data_train[i], dict_cont_bin[i]) ], axis = 1)
     ##离散变量分箱映射
-#    ss = data_train[list( dict_disc_bin.keys())]
+    #ss = data_train[list( dict_disc_bin.keys())]
     df_disc_bin_train = pd.DataFrame()
     for i in dict_disc_bin.keys():
         df_disc_bin_train = pd.concat([ df_disc_bin_train , varbin_meth.disc_var_bin_map(data_train[i], dict_disc_bin[i]) ], axis = 1)
@@ -361,7 +361,7 @@ if __name__ == '__main__':
     for i in dict_cont_bin.keys():
         df_cont_bin_test = pd.concat([ df_cont_bin_test , varbin_meth.cont_var_bin_map(data_test[i], dict_cont_bin[i]) ], axis = 1)
     ##离散变量分箱映射
-#    ss = data_test[list( dict_disc_bin.keys())]
+    #ss = data_test[list( dict_disc_bin.keys())]
     df_disc_bin_test = pd.DataFrame()
     for i in dict_disc_bin.keys():
         df_disc_bin_test = pd.concat([ df_disc_bin_test , varbin_meth.disc_var_bin_map(data_test[i], dict_disc_bin[i]) ], axis = 1)
@@ -409,14 +409,14 @@ if __name__ == '__main__':
         sel_var = [s for s in sel_var if s not in del_var1]
     len(sel_var)
     
-#    ###多重共线筛选，vif方差膨胀银子筛选
-#    df_vif = pd.DataFrame({'value':sel_var,
-#                           'vif':[variance_inflation_factor(np.array(df_train_woe[sel_var]), i) for i in range(len(sel_var))]})
-#    ##删除vif大于10的变量
-#    index_1 = df_vif.vif > 10
-#    if sum(index_1)>0:
-#        df_vif = df_vif.loc[~index_1,]
-#    sel_var = list(df_vif.value)
+    ####多重共线筛选，vif方差膨胀银子筛选
+    #df_vif = pd.DataFrame({'value':sel_var,
+    #                       'vif':[variance_inflation_factor(np.array(df_train_woe[sel_var]), i) for i in range(len(sel_var))]})
+    ###删除vif大于10的变量
+    #index_1 = df_vif.vif > 10
+    #if sum(index_1)>0:
+    #    df_vif = df_vif.loc[~index_1,]
+    #sel_var = list(df_vif.value)
         
     ##随机森林排序
     ##特征选择
@@ -432,7 +432,7 @@ if __name__ == '__main__':
     df_train_woe['target'] = data_train_bin.target
     
     
-   #################模型训练#####################################
+    #################模型训练#####################################
     var_woe_name = list(df_train_woe.columns)
     var_woe_name.remove('target')
     
@@ -456,13 +456,12 @@ if __name__ == '__main__':
     y_train = np.hstack([y_train, np.array(df_temp_other.target)])
     
     sum(y_train==0)/sum(y_train)
-#    ################################
-    
-#    var_woe_name = sel_var
+    #################################   
+    #var_woe_name = sel_var
     ###用样本生成，这里要注释掉
-#    x_train = df_train_woe[var_woe_name]
-#    x_train = np.array(x_train)
-#    y_train = np.array(data_train_bin.target)
+    #x_train = df_train_woe[var_woe_name]
+    #x_train = np.array(x_train)
+    #y_train = np.array(data_train_bin.target)
 
     del_list = []
     for s in var_woe_name:
@@ -497,8 +496,8 @@ if __name__ == '__main__':
     LR_model = LogisticRegression(C=lr_gsearch.best_params_['C'], penalty='l2', solver='saga',
                                     class_weight=lr_gsearch.best_params_['class_weight'])
     ##训练logistic模型
-#    LR_model = LogisticRegression(C=0.01, penalty='l2', solver='saga',
-#                                    class_weight={1: 3, 0: 1})
+    #LR_model = LogisticRegression(C=0.01, penalty='l2', solver='saga',
+    #                                class_weight={1: 3, 0: 1})
     LR_model_fit = LR_model.fit(x_train, y_train)
 
     ##模型评估
@@ -606,15 +605,3 @@ if __name__ == '__main__':
     df_result = pd.DataFrame({'good_num':good_num,'bad_num':bad_num,'bin_rate':bin_rate,
                              'bad_rate':bad_rate,'ks':ks}) 
     print(df_result)
-
-    
-    
-    
-    
-    
-    
-    
-    
-
-    
-    
